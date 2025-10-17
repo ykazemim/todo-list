@@ -87,12 +87,12 @@ class InMemoryRepository:
     # ---------- Task CRUD ----------
 
     def add_task(
-        self,
-        project_id: int,
-        title: str,
-        description: str,
-        status: StatusType = "todo",
-        deadline: Optional[str] = None,
+            self,
+            project_id: int,
+            title: str,
+            description: str,
+            status: StatusType = "todo",
+            deadline: Optional[str] = None,
     ) -> Task:
         """
         Add a task to a project.
@@ -131,60 +131,6 @@ class InMemoryRepository:
         project.tasks.append(task)
         return task
 
-    def edit_task(
-        self,
-        project_id: int,
-        task_id: int,
-        title: str,
-        description: str,
-        status: StatusType,
-        deadline: Optional[str] = None,
-    ) -> Task:
-        """
-        Edit a task's details.
-        """
-        project = self.projects.get(project_id)
-        if not project:
-            raise ValidationError("Project not found.")
-
-        task = next((t for t in project.tasks if t.id == task_id), None)
-        if not task:
-            raise ValidationError("Task not found.")
-
-        if len(title) > MAX_TASK_TITLE:
-            raise ValidationError(f"Task title must be ≤ {MAX_TASK_TITLE} characters.")
-        if len(description) > MAX_TASK_DESC:
-            raise ValidationError(f"Task description must be ≤ {MAX_TASK_DESC} characters.")
-        if status not in VALID_STATUSES:
-            raise ValidationError(f"Invalid status: {status}")
-
-        task_deadline: Optional[date] = None
-        if deadline:
-            try:
-                task_deadline = datetime.strptime(deadline, "%Y-%m-%d").date()
-            except ValueError:
-                raise ValidationError("Deadline must be in YYYY-MM-DD format.")
-
-        task.title = title
-        task.description = description
-        task.status = status
-        task.deadline = task_deadline
-        return task
-
-    def delete_task(self, project_id: int, task_id: int) -> None:
-        """
-        Delete a task by ID within a project.
-        """
-        project = self.projects.get(project_id)
-        if not project:
-            raise ValidationError("Project not found.")
-
-        task = next((t for t in project.tasks if t.id == task_id), None)
-        if not task:
-            raise ValidationError("Task not found.")
-
-        project.tasks.remove(task)
-
     def change_task_status(self, project_id: int, task_id: int, status: StatusType) -> Task:
         """
         Change only the status of a task.
@@ -219,3 +165,55 @@ class InMemoryRepository:
         if not project:
             raise ValidationError("Project not found.")
         return project.tasks
+
+    def edit_task(
+            self,
+            project_id: int,
+            task_id: int,
+            title: str | None = None,
+            description: str | None = None,
+            status: str | None = None,
+            deadline: str | None = None,
+    ) -> None:
+        """Edit a task's attributes."""
+        project = self.projects.get(project_id)
+        if not project:
+            raise ValidationError("Project not found.")
+
+        task = next((t for t in project.tasks if t.id == task_id), None)
+        if not task:
+            raise ValidationError("Task not found.")
+
+        if title is not None:
+            if not (1 <= len(title) <= 30):
+                raise ValidationError("Title must be 1–30 characters.")
+            task.title = title
+
+        if description is not None:
+            if not (1 <= len(description) <= 150):
+                raise ValidationError("Description must be 1–150 characters.")
+            task.description = description
+
+        if status is not None:
+            if status not in ("todo", "doing", "done"):
+                raise ValidationError("Invalid status.")
+            task.status = status
+
+        if deadline is not None:
+            try:
+                datetime.strptime(deadline, "%Y-%m-%d")
+                task.deadline = deadline
+            except ValueError:
+                raise ValidationError("Deadline must be YYYY-MM-DD format.")
+
+    def delete_task(self, project_id: int, task_id: int) -> None:
+        """Delete a task by ID within a project."""
+        project = self.projects.get(project_id)
+        if not project:
+            raise ValidationError("Project not found.")
+
+        for i, t in enumerate(project.tasks):
+            if t.id == task_id:
+                project.tasks.pop(i)
+                return
+        raise ValidationError("Task not found.")
