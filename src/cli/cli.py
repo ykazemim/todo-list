@@ -53,6 +53,43 @@ def main() -> None:
         create_project(repo, args.name, args.description)
     elif args.command == "list-projects":
         list_projects(repo)
+    elif args.command == "add-task":
+        add_task(repo, args.project_id, args.title, args.description, args.status, args.deadline)
+    elif args.command == "list-tasks":
+        list_tasks(repo, args.project_id)
+
+
+def add_task(
+        repo: InMemoryRepository,
+        project_id: int,
+        title: str,
+        description: str,
+        status: str = "todo",
+        deadline: str | None = None,
+) -> None:
+    """Add a task to a specific project."""
+    try:
+        repo.add_task(project_id, title, description, status, deadline)
+        print(f"✅ Task '{title}' added to project ID {project_id}.")
+    except ValidationError as e:
+        print(f"❌ Error: {e}")
+
+
+def list_tasks(repo: InMemoryRepository, project_id: int) -> None:
+    """List all tasks for a specific project."""
+    try:
+        tasks = repo.list_tasks(project_id)
+    except ValidationError as e:
+        print(f"❌ Error: {e}")
+        return
+
+    if not tasks:
+        print(f"No tasks found for project ID {project_id}.")
+        return
+
+    print(f"📝 Tasks for Project ID {project_id}:")
+    for task in tasks:
+        print(f"[{task.id}] {task.title} ({task.status}) — {task.deadline or 'No deadline'}")
 
 
 if __name__ == "__main__":
