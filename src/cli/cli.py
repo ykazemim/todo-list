@@ -1,138 +1,191 @@
-"""
-Command-Line Interface (CLI) for the ToDo List application.
+# src/cli.py
 
-Handles user commands for managing projects and tasks.
-Uses argparse for parsing commands and integrates with InMemoryRepository.
-"""
-
-import argparse
-from src.repositories.memory_repository import InMemoryRepository, ValidationError
+from typing import List, Union, Dict, Any, Optional
+from datetime import date
+from src.models.project import Project
+from src.models.task import Task, StatusType
 
 
-def create_project(repo: InMemoryRepository, name: str, description: str) -> None:
-    """Create a new project."""
+# --- UTILITY DISPLAY FUNCTIONS ---
+
+def _format_date(d: Optional[date]) -> str:
+    """Formats a date object for display or returns 'N/A'."""
+    return d.strftime("%Y-%m-%d") if d else "N/A"
+
+
+def _color_status(status: StatusType) -> str:
+    """A placeholder for adding color/style to status (CLI libraries like 'colorama' would be used in a real app)."""
+    # In a simple terminal, we'll just return the status for now
+    return status.upper()
+
+
+# --- MAIN MENU & INPUT PROMPTS ---
+
+def display_main_menu() -> None:
+    """Displays the main menu options."""
+    print("\n" + "=" * 40)
+    print("      📝 ToDo List CLI")
+    print("=" * 40)
+    print("1. ➕ Create New Project")
+    print("2. 📋 List All Projects")
+    print("3. ✍️  Edit Project")
+    print("4. 🗑️  Delete Project")
+    print("5. 🚪 Exit Application")
+    print("-" * 40)
+
+
+def prompt_for_main_choice() -> Optional[int]:
+    """Prompts the user for a main menu choice."""
     try:
-        repo.add_project(name, description)
-        print(f"✅ Project '{name}' created successfully.")
-    except ValidationError as e:
-        print(f"❌ Error: {e}")
+        choice = input("Enter your choice (1-5): ").strip()
+        if not choice:  # Handle empty input gracefully
+            return None
+        return int(choice)
+    except ValueError:
+        return None
 
 
-def list_projects(repo: InMemoryRepository) -> None:
-    """List all existing projects."""
-    projects = repo.list_all_projects()
+def prompt_for_project_data(is_edit: bool = False) -> Dict[str, str]:
+    """Prompts the user for Project Name and Description."""
+    action = "new" if not is_edit else "edited"
+    print(f"\n--- Enter {action.capitalize()} Project Details ---")
+    name = input("Enter project name: ").strip()
+    description = input("Enter project description: ").strip()
+    return {"name": name, "description": description}
+
+
+def prompt_for_project_id(action: str) -> Optional[int]:
+    """Prompts the user for a Project ID for a specific action."""
+    try:
+        project_id_str = input(f"Enter the ID of the project to {action}: ").strip()
+        if not project_id_str:
+            return None
+        return int(project_id_str)
+    except ValueError:
+        return None
+
+
+# --- PROJECT LISTING & DETAILS ---
+
+def display_projects_list(projects: List[Project]) -> bool:
+    """Displays a list of all projects with their IDs and task counts."""
     if not projects:
-        print("No projects found.")
-        return
+        print("\nNo projects found. Start by creating one (Option 1).")
+        return False
 
-    print("📁 Projects:")
+    print("\n" + "--- All Projects ---")
     for project in projects:
-        print(f"[{project.id}] {project.name} — {project.description}")
+        task_count = len(project.tasks)
+        print(f"[{project.id}] {project.name} (Tasks: {task_count})")
+        print(f"    Description: {project.description[:70]}...")  # Truncate description for list view
+    print("-" * 20)
+    return True
 
 
-def main() -> None:
-    """Main entry point for the CLI."""
-    repo = InMemoryRepository()
-
-    parser = argparse.ArgumentParser(
-        description="ToDo List CLI - Manage projects and tasks"
-    )
-    subparsers = parser.add_subparsers(dest="command", required=True)
-
-    # Create project
-    create_parser = subparsers.add_parser("create-project", help="Create a new project")
-    create_parser.add_argument("name", type=str, help="Project name")
-    create_parser.add_argument("description", type=str, help="Project description")
-
-    # List projects
-    subparsers.add_parser("list-projects", help="List all projects")
-
-    # Edit task
-    edit_task_parser = subparsers.add_parser("edit-task", help="Edit a task")
-    edit_task_parser.add_argument("project_id", type=int, help="ID of the project")
-    edit_task_parser.add_argument("task_id", type=int, help="ID of the task")
-    edit_task_parser.add_argument("--title", type=str, help="New title")
-    edit_task_parser.add_argument("--description", type=str, help="New description")
-    edit_task_parser.add_argument("--status", type=str, choices=["todo", "doing", "done"], help="New status")
-    edit_task_parser.add_argument("--deadline", type=str, help="New deadline (YYYY-MM-DD)")
-    edit_project_parser = subparsers.add_parser("edit-project", help="Edit a project's name and description")
-    edit_project_parser.add_argument("project_id", type=int, help="ID of the project")
-    edit_project_parser.add_argument("new_name", type=str, help="New name for the project")
-    edit_project_parser.add_argument("new_description", type=str, help="New description for the project")
-
-    # Delete task
-    delete_task_parser = subparsers.add_parser("delete-task", help="Delete a task")
-    delete_task_parser.add_argument("project_id", type=int, help="ID of the project")
-    delete_task_parser.add_argument("task_id", type=int, help="ID of the task")
-    delete_project_parser = subparsers.add_parser("delete-project", help="Delete a project")
-    delete_project_parser.add_argument("project_id", type=int, help="ID of the project")
-
-    args = parser.parse_args()
-
-    if args.command == "create-project":
-        create_project(repo, args.name, args.description)
-    elif args.command == "list-projects":
-        list_projects(repo)
-    elif args.command == "add-task":
-        add_task(repo, args.project_id, args.title, args.description, args.status, args.deadline)
-    elif args.command == "list-tasks":
-        list_tasks(repo, args.project_id)
-    elif args.command == "edit-project":
-        edit_project_cli(repo, args.project_id, args.new_name, args.new_description)
-    elif args.command == "delete-project":
-        delete_project_cli(repo, args.project_id)
+def display_project_details_and_menu(project: Project) -> None:
+    """Displays detailed project information and the task management menu."""
+    print("\n" + "=" * 40)
+    print(f"      Project: {project.name} (ID: {project.id})")
+    print("=" * 40)
+    print(f"Description: {project.description}")
+    print(f"Total Tasks: {len(project.tasks)}")
+    print("-" * 40)
+    print("1. Add New Task")
+    print("2. List Tasks")
+    print("3. Edit Task")
+    print("4. Change Task Status")
+    print("5. Delete Task")
+    print("6. Return to Main Menu")
+    print("-" * 40)
 
 
-def add_task(
-        repo: InMemoryRepository,
-        project_id: int,
-        title: str,
-        description: str,
-        status: str = "todo",
-        deadline: str | None = None,
-) -> None:
-    """Add a task to a specific project."""
+def prompt_for_task_menu_choice() -> Optional[int]:
+    """Prompts the user for a task menu choice."""
     try:
-        repo.add_task(project_id, title, description, status, deadline)
-        print(f"✅ Task '{title}' added to project ID {project_id}.")
-    except ValidationError as e:
-        print(f"❌ Error: {e}")
+        choice = input("Enter your choice (1-6): ").strip()
+        if not choice:
+            return None
+        return int(choice)
+    except ValueError:
+        return None
 
 
-def list_tasks(repo: InMemoryRepository, project_id: int) -> None:
-    """List all tasks for a specific project."""
+# --- TASK INPUT PROMPTS ---
+
+def prompt_for_task_data(is_edit: bool = False) -> Dict[str, Union[str, None]]:
+    """Prompts the user for Task Title, Description, Status, and Deadline."""
+    action = "new" if not is_edit else "edited"
+    print(f"\n--- Enter {action.capitalize()} Task Details ---")
+
+    title = input("Enter task title: ").strip()
+    description = input("Enter task description: ").strip()
+    status = input("Enter status (todo/doing/done): ").strip().lower()
+    deadline = input("Enter deadline (YYYY-MM-DD): ").strip()
+
+    return {
+        "title": title if title else None,
+        "description": description if description else None,
+        "status": status if status else None,
+        "deadline": deadline if deadline else None
+    }
+
+
+def prompt_for_task_id(action: str) -> Optional[int]:
+    """Prompts the user for a Task ID for a specific action."""
     try:
-        tasks = repo.list_tasks(project_id)
-    except ValidationError as e:
-        print(f"❌ Error: {e}")
-        return
+        task_id_str = input(f"Enter the ID of the task to {action}: ").strip()
+        if not task_id_str:
+            return None
+        return int(task_id_str)
+    except ValueError:
+        return None
 
+
+def prompt_for_new_status() -> Optional[str]:
+    """Prompts the user for a new task status."""
+    status = input("Enter new status (todo/doing/done): ").strip().lower()
+    return status if status else None
+
+
+# --- TASK LISTING & MESSAGES ---
+
+def display_tasks_list(project: Project) -> None:
+    """Displays all tasks for a given project."""
+    tasks = project.tasks
+    print(f"\n--- Tasks for Project '{project.name}' (ID: {project.id}) ---")
     if not tasks:
-        print(f"No tasks found for project ID {project_id}.")
+        print("No tasks in this project. Start by adding one (Option 1).")
         return
 
-    print(f"📝 Tasks for Project ID {project_id}:")
+    # Header
+    print(f"{'ID':<4} | {'STATUS':<12} | {'DEADLINE':<12} | {'TITLE':<30}")
+    print("-" * 65)
+
+    # List tasks
     for task in tasks:
-        print(f"[{task.id}] {task.title} ({task.status}) — {task.deadline or 'No deadline'}")
+        status_display = _color_status(task.status)
+        deadline_display = _format_date(task.deadline)
+        print(f"{task.id:<4} | {status_display:<12} | {deadline_display:<12} | {task.title:<30}")
+        # print(f"       Description: {task.description}") # Optionally display description
 
 
-def edit_project_cli(repo: InMemoryRepository, project_id: int, new_name: str, new_description: str) -> None:
-    """CLI handler for editing a project's name and description."""
-    try:
-        repo.edit_project(project_id, new_name, new_description)
-        print(f"✅ Project {project_id} updated successfully.")
-    except ValidationError as e:
-        print(f"❌ Error: {e}")
+# --- SYSTEM & ERROR MESSAGES ---
+
+def display_success(message: str) -> None:
+    """Displays a success message."""
+    print(f"\n✅ Success: {message}")
 
 
-def delete_project_cli(repo: InMemoryRepository, project_id: int) -> None:
-    """CLI handler for deleting a project."""
-    try:
-        repo.delete_project(project_id)
-        print(f"🗑️ Project {project_id} deleted successfully.")
-    except ValidationError as e:
-        print(f"❌ Error: {e}")
+def display_error(message: str) -> None:
+    """Displays an error message."""
+    print(f"\n❌ Error: {message}")
 
 
-if __name__ == "__main__":
-    main()
+def display_message(message: str) -> None:
+    """Displays a general message."""
+    print(f"\n{message}")
+
+
+def display_exit_message() -> None:
+    """Displays the farewell message."""
+    print("\n👋 Thank you for using the ToDo List CLI. Goodbye!")
