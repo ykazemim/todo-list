@@ -1,2 +1,19 @@
+# Byte-compiled / caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual envs
+.venv/
 .env
+
+# Poetry
+.poetry/
+
+# Editor + OS
+.vscode/
 .idea/
+.DS_Store
+
+# pytest cache
+.pytest_cache/
