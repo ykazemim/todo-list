@@ -47,6 +47,20 @@ def main() -> None:
     # List projects
     subparsers.add_parser("list-projects", help="List all projects")
 
+    # Edit task
+    edit_task_parser = subparsers.add_parser("edit-task", help="Edit a task")
+    edit_task_parser.add_argument("project_id", type=int, help="ID of the project")
+    edit_task_parser.add_argument("task_id", type=int, help="ID of the task")
+    edit_task_parser.add_argument("--title", type=str, help="New title")
+    edit_task_parser.add_argument("--description", type=str, help="New description")
+    edit_task_parser.add_argument("--status", type=str, choices=["todo", "doing", "done"], help="New status")
+    edit_task_parser.add_argument("--deadline", type=str, help="New deadline (YYYY-MM-DD)")
+
+    # Delete task
+    delete_task_parser = subparsers.add_parser("delete-task", help="Delete a task")
+    delete_task_parser.add_argument("project_id", type=int, help="ID of the project")
+    delete_task_parser.add_argument("task_id", type=int, help="ID of the task")
+
     args = parser.parse_args()
 
     if args.command == "create-project":
@@ -90,6 +104,32 @@ def list_tasks(repo: InMemoryRepository, project_id: int) -> None:
     print(f"📝 Tasks for Project ID {project_id}:")
     for task in tasks:
         print(f"[{task.id}] {task.title} ({task.status}) — {task.deadline or 'No deadline'}")
+
+
+def edit_task_cli(
+        repo: InMemoryRepository,
+        project_id: int,
+        task_id: int,
+        title: str | None,
+        description: str | None,
+        status: str | None,
+        deadline: str | None,
+) -> None:
+    """CLI handler for editing a task."""
+    try:
+        repo.edit_task(project_id, task_id, title, description, status, deadline)
+        print(f"✅ Task {task_id} updated successfully.")
+    except ValidationError as e:
+        print(f"❌ Error: {e}")
+
+
+def delete_task_cli(repo: InMemoryRepository, project_id: int, task_id: int) -> None:
+    """CLI handler for deleting a task."""
+    try:
+        repo.delete_task(project_id, task_id)
+        print(f"🗑️ Task {task_id} deleted successfully.")
+    except ValidationError as e:
+        print(f"❌ Error: {e}")
 
 
 if __name__ == "__main__":
