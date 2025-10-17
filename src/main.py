@@ -250,6 +250,8 @@ def main_menu_loop() -> None:
 
             handle_list_projects()
             project_id = prompt_for_project_id("manage (view/edit tasks)")
+            if not isinstance(project_id, int):
+                display_error("Invalid project ID. Please enter a project ID.")
             if project_id:
                 project = REPO.projects.get(project_id)
                 if project:

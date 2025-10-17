@@ -67,11 +67,11 @@ class InMemoryRepository:
 
         if len(project.tasks) >= int(os.getenv("MAX_NUMBER_OF_TASK", 200)):
             raise ValidationError("Maximum number of tasks reached for this project.")
-        if len(title) <= 0:
+        if title is None or title.strip() == "":
             raise ValidationError("Task title cannot be empty.")
         if len(title) > MAX_TASK_TITLE:
             raise ValidationError(f"Task title must be ≤ {MAX_TASK_TITLE} characters.")
-        if len(description) > MAX_TASK_DESC:
+        if description and len(description) > MAX_TASK_DESC:
             raise ValidationError(f"Task description must be ≤ {MAX_TASK_DESC} characters.")
         if status not in VALID_STATUSES:
             raise ValidationError(f"Invalid status: {status}")
@@ -157,12 +157,14 @@ class InMemoryRepository:
                 raise ValidationError("Invalid status.")
             task.status = status
 
-        if deadline is not None:
+        task_deadline: Optional[date] = None
+        if deadline:
             try:
-                datetime.strptime(deadline, "%Y-%m-%d")
-                task.deadline = deadline
+                task_deadline = datetime.strptime(deadline, "%Y-%m-%d").date()
             except ValueError:
-                raise ValidationError("Deadline must be YYYY-MM-DD format.")
+                raise ValidationError("Deadline must be in YYYY-MM-DD format.")
+        task.deadline = task_deadline
+
         return task
 
     def delete_task(self, project_id: int, task_id: int) -> None:
