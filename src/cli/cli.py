@@ -55,11 +55,17 @@ def main() -> None:
     edit_task_parser.add_argument("--description", type=str, help="New description")
     edit_task_parser.add_argument("--status", type=str, choices=["todo", "doing", "done"], help="New status")
     edit_task_parser.add_argument("--deadline", type=str, help="New deadline (YYYY-MM-DD)")
+    edit_project_parser = subparsers.add_parser("edit-project", help="Edit a project's name and description")
+    edit_project_parser.add_argument("project_id", type=int, help="ID of the project")
+    edit_project_parser.add_argument("new_name", type=str, help="New name for the project")
+    edit_project_parser.add_argument("new_description", type=str, help="New description for the project")
 
     # Delete task
     delete_task_parser = subparsers.add_parser("delete-task", help="Delete a task")
     delete_task_parser.add_argument("project_id", type=int, help="ID of the project")
     delete_task_parser.add_argument("task_id", type=int, help="ID of the task")
+    delete_project_parser = subparsers.add_parser("delete-project", help="Delete a project")
+    delete_project_parser.add_argument("project_id", type=int, help="ID of the project")
 
     args = parser.parse_args()
 
@@ -71,6 +77,10 @@ def main() -> None:
         add_task(repo, args.project_id, args.title, args.description, args.status, args.deadline)
     elif args.command == "list-tasks":
         list_tasks(repo, args.project_id)
+    elif args.command == "edit-project":
+        edit_project_cli(repo, args.project_id, args.new_name, args.new_description)
+    elif args.command == "delete-project":
+        delete_project_cli(repo, args.project_id)
 
 
 def add_task(
@@ -106,28 +116,20 @@ def list_tasks(repo: InMemoryRepository, project_id: int) -> None:
         print(f"[{task.id}] {task.title} ({task.status}) — {task.deadline or 'No deadline'}")
 
 
-def edit_task_cli(
-        repo: InMemoryRepository,
-        project_id: int,
-        task_id: int,
-        title: str | None,
-        description: str | None,
-        status: str | None,
-        deadline: str | None,
-) -> None:
-    """CLI handler for editing a task."""
+def edit_project_cli(repo: InMemoryRepository, project_id: int, new_name: str, new_description: str) -> None:
+    """CLI handler for editing a project's name and description."""
     try:
-        repo.edit_task(project_id, task_id, title, description, status, deadline)
-        print(f"✅ Task {task_id} updated successfully.")
+        repo.edit_project(project_id, new_name, new_description)
+        print(f"✅ Project {project_id} updated successfully.")
     except ValidationError as e:
         print(f"❌ Error: {e}")
 
 
-def delete_task_cli(repo: InMemoryRepository, project_id: int, task_id: int) -> None:
-    """CLI handler for deleting a task."""
+def delete_project_cli(repo: InMemoryRepository, project_id: int) -> None:
+    """CLI handler for deleting a project."""
     try:
-        repo.delete_task(project_id, task_id)
-        print(f"🗑️ Task {task_id} deleted successfully.")
+        repo.delete_project(project_id)
+        print(f"🗑️ Project {project_id} deleted successfully.")
     except ValidationError as e:
         print(f"❌ Error: {e}")
 
