@@ -49,35 +49,6 @@ class InMemoryRepository:
         self.next_project_id += 1
         return project
 
-    def edit_project(self, project_id: int, name: str, description: str) -> Project:
-        """
-        Update a project's name and description.
-        """
-        project = self.projects.get(project_id)
-        if project is None:
-            raise ValidationError("Project not found.")
-
-        if len(name) > 30:
-            raise ValidationError("Project name must be ≤ 30 characters.")
-
-        if len(description) > 150:
-            raise ValidationError("Project description must be ≤ 150 characters.")
-
-        if any(p.name == name and p.id != project_id for p in self.projects.values()):
-            raise ValidationError(f"Project name '{name}' already exists.")
-
-        project.name = name
-        project.description = description
-        return project
-
-    def delete_project(self, project_id: int) -> None:
-        """
-        Delete a project and cascade delete its tasks.
-        """
-        if project_id not in self.projects:
-            raise ValidationError("Project not found.")
-        del self.projects[project_id]
-
     def list_projects(self) -> List[Project]:
         """
         Return all projects sorted by creation time (ID).
@@ -217,3 +188,27 @@ class InMemoryRepository:
                 project.tasks.pop(i)
                 return
         raise ValidationError("Task not found.")
+
+    def edit_project(self, project_id: int, new_name: str, new_description: str) -> None:
+        """Edit a project's name and description."""
+        project = self.projects.get(project_id)
+        if not project:
+            raise ValidationError("Project not found.")
+
+        if not (1 <= len(new_name) <= 30):
+            raise ValidationError("Project name must be 1–30 characters.")
+        if not (1 <= len(new_description) <= 150):
+            raise ValidationError("Project description must be 1–150 characters.")
+
+        # Ensure uniqueness of the new name
+        if any(p.name == new_name and p.id != project_id for p in self.projects.values()):
+            raise ValidationError("Project name must be unique.")
+
+        project.name = new_name
+        project.description = new_description
+
+    def delete_project(self, project_id: int) -> None:
+        """Delete a project and all its tasks."""
+        if project_id not in self.projects:
+            raise ValidationError("Project not found.")
+        del self.projects[project_id]
