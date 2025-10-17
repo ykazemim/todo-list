@@ -1,5 +1,3 @@
-# src/cli.py
-
 from typing import List, Union, Dict, Any, Optional
 from datetime import date
 from src.models.project import Project
@@ -15,7 +13,6 @@ def _format_date(d: Optional[date]) -> str:
 
 def _color_status(status: StatusType) -> str:
     """A placeholder for adding color/style to status (CLI libraries like 'colorama' would be used in a real app)."""
-    # In a simple terminal, we'll just return the status for now
     return status.upper()
 
 
@@ -157,17 +154,17 @@ def display_tasks_list(project: Project) -> None:
         print("No tasks in this project. Start by adding one (Option 1).")
         return
 
-    # Header
     print(f"{'ID':<4} | {'STATUS':<12} | {'DEADLINE':<12} | {'TITLE':<30}")
-    print("-" * 65)
 
-    # List tasks
     for task in tasks:
         status_display = _color_status(task.status)
         deadline_display = _format_date(task.deadline)
-        print(f"{task.id:<4} | {status_display:<12} | {deadline_display:<12} | {task.title:<30}")
-        # print(f"       Description: {task.description}") # Optionally display description
 
+        print("-" * 70)  # separator
+
+        print(f"{task.id:<4} | {status_display:<12} | {deadline_display:<12} | {task.title:<30}")
+        print(f"     └─ Description: {task.description}")
+        print()  # extra line for spacing between tasks
 
 # --- SYSTEM & ERROR MESSAGES ---
 
