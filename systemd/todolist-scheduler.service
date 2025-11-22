@@ -1,7 +1,7 @@
 [Unit]
 Description=ToDo List Scheduler Daemon
-After=network.target postgresql.service
-Requires=postgresql.service
+After=network.target
+Wants=docker.service
 
 [Service]
 Type=simple
