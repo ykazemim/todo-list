@@ -2,7 +2,7 @@ from typing import Dict, List, Optional, Literal
 from datetime import datetime, date
 from src.models.project import Project
 from src.models.task import Task, StatusType
-from src.exceptions.todo_exceptions import (
+from src.exceptions import (
     ValidationError,
     ProjectNotFoundError,
     TaskNotFoundError,
