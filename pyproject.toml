@@ -1,10 +1,10 @@
 [tool.poetry]
 name = "todo-list"
 version = "0.1.0"
-description = ""
+description = "A command-line ToDo list application with PostgreSQL persistence"
 authors = ["Younes Kazemi M. <ykazemim04@gmail.com>"]
 readme = "README.md"
-packages = [{ include = "todo_list" }]
+packages = []
 
 [tool.poetry.dependencies]
 python = ">=3.12"
