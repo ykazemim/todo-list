@@ -1,16 +1,14 @@
-[project]
+[tool.poetry]
 name = "todo-list"
 version = "0.1.0"
 description = ""
-authors = [
-    {name = "Younes Kazemi M.",email = "ykazemim04@gmail.com"}
-]
+authors = ["Younes Kazemi M. <ykazemim04@gmail.com>"]
 readme = "README.md"
-requires-python = ">=3.13"
-dependencies = [
-    "python-dotenv (>=1.1.1,<2.0.0)"
-]
+packages = [{ include = "todo_list" }]
 
+[tool.poetry.dependencies]
+python = ">=3.12"
+python-dotenv = "^1.1.1"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
