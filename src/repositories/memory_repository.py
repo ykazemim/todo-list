@@ -1,19 +1,22 @@
-from dotenv import load_dotenv
 from typing import Dict, List, Optional, Literal
 from datetime import datetime, date
 from src.models.project import Project
-from src.models.task import Task
-from src.exceptions.todo_exceptions import ValidationError
-import os
+from src.models.task import Task, StatusType
+from src.exceptions.todo_exceptions import (
+    ValidationError,
+    ProjectNotFoundError,
+    TaskNotFoundError,
+    LimitExceededError,
+)
+from src.config.settings import (
+    MAX_NUMBER_OF_PROJECTS,
+    MAX_NUMBER_OF_TASKS_PER_PROJECT,
+    MAX_PROJECT_NAME_WORDS,
+    MAX_PROJECT_DESCRIPTION_WORDS,
+    MAX_TASK_TITLE_WORDS,
+    MAX_TASK_DESCRIPTION_WORDS,
+)
 
-load_dotenv()
-
-MAX_NUMBER_OF_PROJECT = int(os.getenv("MAX_NUMBER_OF_PROJECT", "10"))
-MAX_NUMBER_OF_TASK = int(os.getenv("MAX_NUMBER_OF_TASK", "50"))
-StatusType = Literal["todo", "doing", "done"]
-
-MAX_TASK_TITLE = 30
-MAX_TASK_DESC = 150
 VALID_STATUSES: list[StatusType] = ["todo", "doing", "done"]
 
 
@@ -29,18 +32,19 @@ class InMemoryRepository:
     def add_project(self, name: str, description: str) -> Project:
         """Create and store a new project with validation.
         Raises:
-            ValidationError: If limits are exceeded or name is duplicate.
+            ValidationError: If validation fails.
+            LimitExceededError: If maximum number of projects is reached.
         """
         if len(name) <= 0:
             raise ValidationError("Project name cannot be empty.")
-        if len(self.projects) >= MAX_NUMBER_OF_PROJECT:
-            raise ValidationError("Maximum number of projects reached.")
+        if len(self.projects) >= MAX_NUMBER_OF_PROJECTS:
+            raise LimitExceededError("Maximum number of projects reached.")
         if any(p.name == name for p in self.projects.values()):
             raise ValidationError(f"Project name '{name}' already exists.")
-        if len(name) > 30:
-            raise ValidationError("Project name must be ≤ 30 characters.")
-        if len(description) > 150:
-            raise ValidationError("Project description must be ≤ 150 characters.")
+        if len(name) > MAX_PROJECT_NAME_WORDS:
+            raise ValidationError(f"Project name must be ≤ {MAX_PROJECT_NAME_WORDS} characters.")
+        if len(description) > MAX_PROJECT_DESCRIPTION_WORDS:
+            raise ValidationError(f"Project description must be ≤ {MAX_PROJECT_DESCRIPTION_WORDS} characters.")
 
         project = Project(id=self.next_project_id, name=name, description=description)
         self.projects[self.next_project_id] = project
@@ -60,19 +64,24 @@ class InMemoryRepository:
             status: StatusType = "todo",
             deadline: Optional[str] = None,
     ) -> Task:
-        """Add a task to a project."""
+        """Add a task to a project.
+        Raises:
+            ProjectNotFoundError: If project doesn't exist.
+            LimitExceededError: If maximum number of tasks is reached.
+            ValidationError: If validation fails.
+        """
         project = self.projects.get(project_id)
         if project is None:
-            raise ValidationError("Project not found.")
+            raise ProjectNotFoundError(f"Project with ID {project_id} not found.")
 
-        if len(project.tasks) >= int(os.getenv("MAX_NUMBER_OF_TASK", 200)):
-            raise ValidationError("Maximum number of tasks reached for this project.")
+        if len(project.tasks) >= MAX_NUMBER_OF_TASKS_PER_PROJECT:
+            raise LimitExceededError("Maximum number of tasks reached for this project.")
         if title is None or title.strip() == "":
             raise ValidationError("Task title cannot be empty.")
-        if len(title) > MAX_TASK_TITLE:
-            raise ValidationError(f"Task title must be ≤ {MAX_TASK_TITLE} characters.")
-        if description and len(description) > MAX_TASK_DESC:
-            raise ValidationError(f"Task description must be ≤ {MAX_TASK_DESC} characters.")
+        if len(title) > MAX_TASK_TITLE_WORDS:
+            raise ValidationError(f"Task title must be ≤ {MAX_TASK_TITLE_WORDS} characters.")
+        if description and len(description) > MAX_TASK_DESCRIPTION_WORDS:
+            raise ValidationError(f"Task description must be ≤ {MAX_TASK_DESCRIPTION_WORDS} characters.")
         if status not in VALID_STATUSES:
             raise ValidationError(f"Invalid status: {status}")
 
@@ -95,14 +104,19 @@ class InMemoryRepository:
         return task
 
     def change_task_status(self, project_id: int, task_id: int, status: StatusType) -> Task:
-        """Change only the status of a task."""
+        """Change only the status of a task.
+        Raises:
+            ProjectNotFoundError: If project doesn't exist.
+            TaskNotFoundError: If task doesn't exist.
+            ValidationError: If status is invalid.
+        """
         project = self.projects.get(project_id)
         if not project:
-            raise ValidationError("Project not found.")
+            raise ProjectNotFoundError(f"Project with ID {project_id} not found.")
 
         task = next((t for t in project.tasks if t.id == task_id), None)
         if not task:
-            raise ValidationError("Task not found.")
+            raise TaskNotFoundError(f"Task with ID {task_id} not found in project {project_id}.")
         if status not in VALID_STATUSES:
             raise ValidationError(f"Invalid status: {status}")
 
@@ -117,11 +131,12 @@ class InMemoryRepository:
 
     def list_tasks(self, project_id: int) -> List[Task]:
         """Return all tasks for a project.
-        If the project doesn't exist or has no tasks, returns an empty list.
+        Raises:
+            ProjectNotFoundError: If project doesn't exist.
         """
         project = self.projects.get(project_id)
         if not project:
-            raise ValidationError("Project not found.")
+            raise ProjectNotFoundError(f"Project with ID {project_id} not found.")
         return project.tasks
 
     def edit_task(
@@ -133,23 +148,28 @@ class InMemoryRepository:
             status: str | None = None,
             deadline: str | None = None,
     ) -> Task:
-        """Edit a task's attributes."""
+        """Edit a task's attributes.
+        Raises:
+            ProjectNotFoundError: If project doesn't exist.
+            TaskNotFoundError: If task doesn't exist.
+            ValidationError: If validation fails.
+        """
         project = self.projects.get(project_id)
         if not project:
-            raise ValidationError("Project not found.")
+            raise ProjectNotFoundError(f"Project with ID {project_id} not found.")
 
         task = next((t for t in project.tasks if t.id == task_id), None)
         if not task:
-            raise ValidationError("Task not found.")
+            raise TaskNotFoundError(f"Task with ID {task_id} not found in project {project_id}.")
 
         if title is not None:
-            if not (1 <= len(title) <= 30):
-                raise ValidationError("Title must be 1–30 characters.")
+            if not (1 <= len(title) <= MAX_TASK_TITLE_WORDS):
+                raise ValidationError(f"Title must be 1–{MAX_TASK_TITLE_WORDS} characters.")
             task.title = title
 
         if description is not None:
-            if not (1 <= len(description) <= 150):
-                raise ValidationError("Description must be 1–150 characters.")
+            if not (1 <= len(description) <= MAX_TASK_DESCRIPTION_WORDS):
+                raise ValidationError(f"Description must be 1–{MAX_TASK_DESCRIPTION_WORDS} characters.")
             task.description = description
 
         if status is not None:
@@ -168,27 +188,35 @@ class InMemoryRepository:
         return task
 
     def delete_task(self, project_id: int, task_id: int) -> None:
-        """Delete a task by ID within a project."""
+        """Delete a task by ID within a project.
+        Raises:
+            ProjectNotFoundError: If project doesn't exist.
+            TaskNotFoundError: If task doesn't exist.
+        """
         project = self.projects.get(project_id)
         if not project:
-            raise ValidationError("Project not found.")
+            raise ProjectNotFoundError(f"Project with ID {project_id} not found.")
 
         for i, t in enumerate(project.tasks):
             if t.id == task_id:
                 project.tasks.pop(i)
                 return
-        raise ValidationError("Task not found.")
+        raise TaskNotFoundError(f"Task with ID {task_id} not found in project {project_id}.")
 
     def edit_project(self, project_id: int, new_name: str, new_description: str) -> Project:
-        """Edit a project's name and description."""
+        """Edit a project's name and description.
+        Raises:
+            ProjectNotFoundError: If project doesn't exist.
+            ValidationError: If validation fails.
+        """
         project = self.projects.get(project_id)
         if not project:
-            raise ValidationError("Project not found.")
+            raise ProjectNotFoundError(f"Project with ID {project_id} not found.")
 
-        if not (1 <= len(new_name) <= 30):
-            raise ValidationError("Project name must be 1–30 characters.")
-        if not (1 <= len(new_description) <= 150):
-            raise ValidationError("Project description must be 1–150 characters.")
+        if not (1 <= len(new_name) <= MAX_PROJECT_NAME_WORDS):
+            raise ValidationError(f"Project name must be 1–{MAX_PROJECT_NAME_WORDS} characters.")
+        if not (1 <= len(new_description) <= MAX_PROJECT_DESCRIPTION_WORDS):
+            raise ValidationError(f"Project description must be 1–{MAX_PROJECT_DESCRIPTION_WORDS} characters.")
 
         # Ensure uniqueness of the new name
         if any(p.name == new_name and p.id != project_id for p in self.projects.values()):
@@ -199,7 +227,10 @@ class InMemoryRepository:
         return project
 
     def delete_project(self, project_id: int) -> None:
-        """Delete a project and all its tasks."""
+        """Delete a project and all its tasks.
+        Raises:
+            ProjectNotFoundError: If project doesn't exist.
+        """
         if project_id not in self.projects:
-            raise ValidationError("Project not found.")
+            raise ProjectNotFoundError(f"Project with ID {project_id} not found.")
         del self.projects[project_id]
