@@ -17,3 +17,6 @@ venv/
 
 # pytest cache
 .pytest_cache/
+
+# Alembic
+alembic/versions/*.pyc
