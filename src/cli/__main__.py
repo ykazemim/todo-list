@@ -9,6 +9,7 @@ def main() -> None:
         print("Usage: todolist <command>")
         print("Commands:")
         print("  tasks:autoclose-overdue  - Automatically close overdue tasks")
+        print("  scheduler:run            - Run the task scheduler")
         sys.exit(1)
 
     # Join all args to handle commands like "tasks:autoclose-overdue"
@@ -18,9 +19,15 @@ def main() -> None:
         from src.cli.commands import handle_autoclose_overdue
 
         handle_autoclose_overdue()
+    elif command == "scheduler:run":
+        from src.commands.scheduler import run_scheduler
+
+        run_scheduler()
     else:
         print(f"Unknown command: {command}")
-        print("Available commands: tasks:autoclose-overdue")
+        print("Available commands:")
+        print("  tasks:autoclose-overdue  - Automatically close overdue tasks")
+        print("  scheduler:run            - Run the task scheduler")
         sys.exit(1)
 
 
