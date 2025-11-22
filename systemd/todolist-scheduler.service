@@ -1,0 +1,18 @@
+[Unit]
+Description=ToDo List Scheduler Daemon
+After=network.target postgresql.service
+Requires=postgresql.service
+
+[Service]
+Type=simple
+User=%i
+WorkingDirectory=/home/%i/todo-list
+Environment="PATH=/home/%i/.local/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart=/home/%i/todo-list/scripts/start-scheduler.sh
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

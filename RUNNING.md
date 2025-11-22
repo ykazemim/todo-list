@@ -112,9 +112,40 @@ This will find all tasks where:
 
 And automatically mark them as done with a `closed_at` timestamp.
 
-### Run the Scheduler
+### Set Up Automated Scheduler
 
-To run the scheduler that automatically executes tasks periodically:
+The scheduler can run automatically as a system service (recommended) or manually.
+
+#### Option 1: Automatic Startup (Recommended - Linux)
+
+Install as a systemd service for automatic startup:
+
+```bash
+# Install the service
+./scripts/install-scheduler-service.sh
+
+# Start the service
+systemctl --user start todolist-scheduler
+
+# Enable auto-start on boot
+systemctl --user enable todolist-scheduler
+
+# Check status
+systemctl --user status todolist-scheduler
+
+# View logs
+journalctl --user -u todolist-scheduler -f
+```
+
+The scheduler will:
+- Start automatically on system boot
+- Run autoclose-overdue daily at midnight (00:00)
+- Restart automatically if it crashes
+- Log to `~/.todo-list/scheduler.log` and systemd journal
+
+#### Option 2: Manual Run
+
+To run the scheduler manually (for testing or if systemd is not available):
 
 ```bash
 # Using Poetry
@@ -128,6 +159,7 @@ The scheduler will:
 - Run autoclose-overdue daily at midnight (00:00)
 - Check for pending tasks every minute
 - Run continuously until stopped (Ctrl+C)
+- Log to `~/.todo-list/scheduler.log`
 
 ## Troubleshooting
 
