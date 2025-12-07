@@ -11,8 +11,8 @@ from src.exceptions import (
 )
 from src.config.settings import (
     MAX_NUMBER_OF_PROJECTS,
-    MAX_PROJECT_NAME_WORDS,
-    MAX_PROJECT_DESCRIPTION_WORDS,
+    MAX_PROJECT_NAME_CHARS,
+    MAX_PROJECT_DESCRIPTION_CHARS,
 )
 
 
@@ -50,13 +50,13 @@ class ProjectRepository:
         if existing:
             raise ValidationError(f"Project name '{name}' already exists.")
 
-        if len(name) > MAX_PROJECT_NAME_WORDS:
+        if len(name) > MAX_PROJECT_NAME_CHARS:
             raise ValidationError(
-                f"Project name must be ≤ {MAX_PROJECT_NAME_WORDS} characters."
+                f"Project name must be ≤ {MAX_PROJECT_NAME_CHARS} characters."
             )
-        if len(description) > MAX_PROJECT_DESCRIPTION_WORDS:
+        if len(description) > MAX_PROJECT_DESCRIPTION_CHARS:
             raise ValidationError(
-                f"Project description must be ≤ {MAX_PROJECT_DESCRIPTION_WORDS} characters."
+                f"Project description must be ≤ {MAX_PROJECT_DESCRIPTION_CHARS} characters."
             )
 
         project = Project(name=name, description=description)
@@ -99,13 +99,13 @@ class ProjectRepository:
         """
         project = self.get_by_id(project_id)
 
-        if not (1 <= len(name) <= MAX_PROJECT_NAME_WORDS):
+        if not (1 <= len(name) <= MAX_PROJECT_NAME_CHARS):
             raise ValidationError(
-                f"Project name must be 1–{MAX_PROJECT_NAME_WORDS} characters."
+                f"Project name must be 1–{MAX_PROJECT_NAME_CHARS} characters."
             )
-        if not (1 <= len(description) <= MAX_PROJECT_DESCRIPTION_WORDS):
+        if not (1 <= len(description) <= MAX_PROJECT_DESCRIPTION_CHARS):
             raise ValidationError(
-                f"Project description must be 1–{MAX_PROJECT_DESCRIPTION_WORDS} characters."
+                f"Project description must be 1–{MAX_PROJECT_DESCRIPTION_CHARS} characters."
             )
 
         # Check for duplicate name (excluding current project)

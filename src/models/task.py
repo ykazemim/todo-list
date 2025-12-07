@@ -1,7 +1,7 @@
 """Task model definition."""
 
 from __future__ import annotations
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Literal, Optional
 from sqlalchemy import Column, Integer, String, Date, DateTime, ForeignKey, CheckConstraint
 from sqlalchemy.orm import relationship, Mapped, mapped_column
@@ -43,7 +43,7 @@ class Task(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
-        default=datetime.utcnow,
+        default=lambda: datetime.now(timezone.utc),
         server_default="CURRENT_TIMESTAMP",
     )
     closed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)

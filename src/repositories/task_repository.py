@@ -1,7 +1,7 @@
 """SQLAlchemy repository for Task operations."""
 
 from typing import List, Optional
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 from src.models.task import Task, StatusType
@@ -14,8 +14,8 @@ from src.exceptions import (
 )
 from src.config.settings import (
     MAX_NUMBER_OF_TASKS_PER_PROJECT,
-    MAX_TASK_TITLE_WORDS,
-    MAX_TASK_DESCRIPTION_WORDS,
+    MAX_TASK_TITLE_CHARS,
+    MAX_TASK_DESCRIPTION_CHARS,
 )
 
 VALID_STATUSES: list[StatusType] = ["todo", "doing", "done"]
@@ -69,13 +69,13 @@ class TaskRepository:
 
         if not title or title.strip() == "":
             raise ValidationError("Task title cannot be empty.")
-        if len(title) > MAX_TASK_TITLE_WORDS:
+        if len(title) > MAX_TASK_TITLE_CHARS:
             raise ValidationError(
-                f"Task title must be ≤ {MAX_TASK_TITLE_WORDS} characters."
+                f"Task title must be ≤ {MAX_TASK_TITLE_CHARS} characters."
             )
-        if description and len(description) > MAX_TASK_DESCRIPTION_WORDS:
+        if description and len(description) > MAX_TASK_DESCRIPTION_CHARS:
             raise ValidationError(
-                f"Task description must be ≤ {MAX_TASK_DESCRIPTION_WORDS} characters."
+                f"Task description must be ≤ {MAX_TASK_DESCRIPTION_CHARS} characters."
             )
         if status not in VALID_STATUSES:
             raise ValidationError(f"Invalid status: {status}")
@@ -162,16 +162,16 @@ class TaskRepository:
         task = self.get_by_id(project_id, task_id)
 
         if title is not None:
-            if not (1 <= len(title) <= MAX_TASK_TITLE_WORDS):
+            if not (1 <= len(title) <= MAX_TASK_TITLE_CHARS):
                 raise ValidationError(
-                    f"Title must be 1–{MAX_TASK_TITLE_WORDS} characters."
+                    f"Title must be 1–{MAX_TASK_TITLE_CHARS} characters."
                 )
             task.title = title
 
         if description is not None:
-            if not (1 <= len(description) <= MAX_TASK_DESCRIPTION_WORDS):
+            if not (1 <= len(description) <= MAX_TASK_DESCRIPTION_CHARS):
                 raise ValidationError(
-                    f"Description must be 1–{MAX_TASK_DESCRIPTION_WORDS} characters."
+                    f"Description must be 1–{MAX_TASK_DESCRIPTION_CHARS} characters."
                 )
             task.description = description
 
@@ -213,7 +213,7 @@ class TaskRepository:
 
         task.status = status
         if status == "done" and not task.closed_at:
-            task.closed_at = datetime.utcnow()
+            task.closed_at = datetime.now(timezone.utc)
         elif status != "done":
             task.closed_at = None
 

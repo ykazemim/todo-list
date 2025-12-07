@@ -1,7 +1,7 @@
 """Project model definition."""
 
 from __future__ import annotations
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING
 from sqlalchemy import Column, Integer, String, DateTime, UniqueConstraint
 from sqlalchemy.orm import relationship, Mapped, mapped_column
@@ -29,7 +29,7 @@ class Project(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         nullable=False,
-        default=datetime.utcnow,
+        default=lambda: datetime.now(timezone.utc),
         server_default="CURRENT_TIMESTAMP",
     )
 
