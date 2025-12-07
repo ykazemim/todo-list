@@ -1,66 +1,105 @@
-# ToDo List CLI
+# ToDo List API
 
-A command-line interface application for managing projects and their associated tasks. This tool allows users to create, view, edit, and delete projects and tasks with validation checks.
+A RESTful API for managing projects and tasks, built with FastAPI.
+
+> ⚠️ **DEPRECATION NOTICE**: The CLI interface is deprecated and will be removed in a future version. Please use the Web API instead.
 
 ## Features
 
-* **Project Management:** Create, list, edit, and delete projects.
-* **Task Management:** Add, list, edit, change status, and delete tasks within a project.
-* **Data Validation:** Ensures data integrity for project and task names, descriptions, statuses, and deadlines.
-* **In-Memory Storage:** Uses a simple in-memory repository for application data storage.
-* **Concurrency Limits:** Respects limits for the maximum number of projects and tasks (configured via environment variables).
+* **RESTful API**: Full CRUD operations for projects and tasks
+* **Automatic Documentation**: Swagger UI at `/docs` and ReDoc at `/redoc`
+* **Data Validation**: Pydantic-based request/response validation
+* **PostgreSQL**: Persistent storage with SQLAlchemy ORM
+* **Database Migrations**: Alembic for schema management
 
 ## Getting Started
 
 ### Prerequisites
 
-* Python 3.13+
+* Python 3.12+
+* Docker (for PostgreSQL)
+* Poetry
 
 ### Installation
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/ykazemim/todo-list.git
-    cd todo-list
-    ```
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/ykazemim/todo-list.git
+   cd todo-list
+   ```
 
-2.  **Install dependencies:**
-    The project uses `poetry` for dependency management.
+2. **Install dependencies:**
+   ```bash
+   pip install poetry
+   poetry install
+   ```
 
-    ```bash
-    pip install poetry
-    poetry install
-    ```
-    
-    *Alternatively, if you are not using `poetry`, you can install dependencies manually:*
-    ```bash
-    pip install python-dotenv
-    ```
+3. **Set up environment:**
+   ```bash
+   cp .env.example .env
+   ```
 
-3.  **Set up Environment Variables (Optional):**
-    The application reads configuration from a `.env` file (via `python-dotenv`). You can create a file named `.env` in the root directory to customize limits (or just rename .env.example to .env):
+4. **Start PostgreSQL:**
+   ```bash
+   docker compose up -d
+   ```
 
-    ```
-    # .env example
-    MAX_NUMBER_OF_PROJECT=10
-    MAX_NUMBER_OF_TASK=50
-    ```
-    If not specified, defaults are used (10 projects, 50 tasks - though task limits default to 200 in the `memory_repository.py` if the environment variable isn't set).
+5. **Run database migrations:**
+   ```bash
+   poetry run alembic upgrade head
+   ```
 
-### Usage
-
-Run the main application file:
+### Running the API
 
 ```bash
-poetry run python -m src.main
-# OR
-python src/main.py
-```  
+poetry run uvicorn src.api.app:app --reload
+```
+
+The API will be available at `http://localhost:8000`.
+
+* **Swagger UI**: http://localhost:8000/docs
+* **ReDoc**: http://localhost:8000/redoc
+
+### API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/projects` | List all projects |
+| POST | `/api/v1/projects` | Create a project |
+| GET | `/api/v1/projects/{id}` | Get a project |
+| PUT | `/api/v1/projects/{id}` | Update a project |
+| DELETE | `/api/v1/projects/{id}` | Delete a project |
+| GET | `/api/v1/projects/{id}/tasks` | List tasks in a project |
+| POST | `/api/v1/projects/{id}/tasks` | Create a task |
+| GET | `/api/v1/projects/{id}/tasks/{task_id}` | Get a task |
+| PUT | `/api/v1/projects/{id}/tasks/{task_id}` | Update a task |
+| PATCH | `/api/v1/projects/{id}/tasks/{task_id}/status` | Change task status |
+| DELETE | `/api/v1/projects/{id}/tasks/{task_id}` | Delete a task |
+
+### CLI (Deprecated)
+
+The CLI is deprecated but still available:
+
+```bash
+poetry run python src/main.py
+```
+
+### Scheduled Tasks
+
+Auto-close overdue tasks:
+```bash
+poetry run todolist tasks:autoclose-overdue
+```
+
+Run the scheduler daemon:
+```bash
+poetry run todolist scheduler:run
+```
 
 ## Contributing
 
-Contributions are welcome and highly appreciated! Whether it's reporting a bug, suggesting a new feature, or submitting a pull request, your input helps make this project better.  
+Contributions are welcome! Please submit pull requests.
 
 ## License
 
-This project is licensed under the MIT License. See the **[LICENSE](LICENSE)** file for more details.
+MIT License. See [LICENSE](LICENSE) for details.

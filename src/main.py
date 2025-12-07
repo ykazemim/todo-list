@@ -1,6 +1,11 @@
-"""Main application entry point."""
+"""Main application entry point.
+
+DEPRECATED: The CLI interface is deprecated and will be removed in a future version.
+Please use the Web API instead: uvicorn src.api.app:app --reload
+"""
 
 import sys
+import warnings
 from typing import Literal, cast
 
 from src.cli.cli import (
@@ -318,8 +323,15 @@ def main_menu_loop(
 
 
 if __name__ == "__main__":
+    warnings.warn(
+        "The CLI is deprecated and will be removed in a future version. "
+        "Use the Web API instead: uvicorn src.api.app:app --reload",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    print("\n⚠️  WARNING: The CLI is deprecated. Use the Web API instead.\n")
+
     try:
-        # Get database session and create services
         session_gen = get_session()
         session = next(session_gen)
 
