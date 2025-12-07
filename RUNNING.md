@@ -43,23 +43,6 @@ Create a `.env` file in the project root (copy from `.env.example`):
 cp .env.example .env
 ```
 
-The `.env` file should contain:
-```env
-POSTGRES_USER=todolist
-POSTGRES_PASSWORD=todolist
-POSTGRES_DB=todolist
-POSTGRES_HOST=localhost
-POSTGRES_PORT=5432
-DATABASE_URL=postgresql://todolist:todolist@localhost:5432/todolist
-
-MAX_NUMBER_OF_PROJECTS=10
-MAX_NUMBER_OF_TASKS_PER_PROJECT=50
-MAX_PROJECT_NAME_WORDS=30
-MAX_PROJECT_DESCRIPTION_WORDS=150
-MAX_TASK_TITLE_WORDS=30
-MAX_TASK_DESCRIPTION_WORDS=150
-```
-
 ### 4. Run Database Migrations
 
 ```bash
@@ -74,22 +57,6 @@ This will create the `projects` and `tasks` tables in the database.
 ```bash
 # Using Poetry
 poetry run python -m src.main
-
-# OR directly with Python
-python src/main.py
-```
-
-You'll see the main menu:
-```
-========================================
-      📝 ToDo List CLI
-========================================
-1. ➕ Create New Project
-2. 📋 List All Projects
-3. ✍️  Edit Project
-4. 🗑️  Delete Project
-5. 🚪 Exit Application
-----------------------------------------
 ```
 
 ## Using Commands
@@ -206,17 +173,6 @@ If migrations fail:
    poetry run alembic upgrade head
    ```
 
-### Port Already in Use
-
-If port 5432 is already in use:
-
-1. **Change the port in `.env`:**
-   ```env
-   POSTGRES_PORT=5433
-   ```
-
-2. **Update `docker-compose.yml` or use a different port**
-
 ## Stopping the Database
 
 When you're done:
@@ -247,25 +203,3 @@ poetry run alembic upgrade head
 # 5. Run the application
 poetry run python -m src.main
 ```
-
-## Example Workflow
-
-1. **Start the application:**
-   ```bash
-   poetry run python -m src.main
-   ```
-
-2. **Create a project:**
-   - Choose option `1`
-   - Enter project name and description
-
-3. **Add tasks:**
-   - Choose option `3` to manage a project
-   - Choose option `1` to add a task
-   - Enter task details including a deadline in the past (e.g., `2024-01-01`)
-
-4. **Test autoclose:**
-   ```bash
-   poetry run todolist tasks:autoclose-overdue
-   ```
-   The overdue task should be automatically marked as done!

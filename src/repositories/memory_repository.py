@@ -11,10 +11,10 @@ from src.exceptions import (
 from src.config.settings import (
     MAX_NUMBER_OF_PROJECTS,
     MAX_NUMBER_OF_TASKS_PER_PROJECT,
-    MAX_PROJECT_NAME_WORDS,
-    MAX_PROJECT_DESCRIPTION_WORDS,
-    MAX_TASK_TITLE_WORDS,
-    MAX_TASK_DESCRIPTION_WORDS,
+    MAX_PROJECT_NAME_CHARS,
+    MAX_PROJECT_DESCRIPTION_CHARS,
+    MAX_TASK_TITLE_CHARS,
+    MAX_TASK_DESCRIPTION_CHARS,
 )
 
 VALID_STATUSES: list[StatusType] = ["todo", "doing", "done"]
@@ -41,10 +41,10 @@ class InMemoryRepository:
             raise LimitExceededError("Maximum number of projects reached.")
         if any(p.name == name for p in self.projects.values()):
             raise ValidationError(f"Project name '{name}' already exists.")
-        if len(name) > MAX_PROJECT_NAME_WORDS:
-            raise ValidationError(f"Project name must be ≤ {MAX_PROJECT_NAME_WORDS} characters.")
-        if len(description) > MAX_PROJECT_DESCRIPTION_WORDS:
-            raise ValidationError(f"Project description must be ≤ {MAX_PROJECT_DESCRIPTION_WORDS} characters.")
+        if len(name) > MAX_PROJECT_NAME_CHARS:
+            raise ValidationError(f"Project name must be ≤ {MAX_PROJECT_NAME_CHARS} characters.")
+        if len(description) > MAX_PROJECT_DESCRIPTION_CHARS:
+            raise ValidationError(f"Project description must be ≤ {MAX_PROJECT_DESCRIPTION_CHARS} characters.")
 
         project = Project(id=self.next_project_id, name=name, description=description)
         self.projects[self.next_project_id] = project
@@ -78,10 +78,10 @@ class InMemoryRepository:
             raise LimitExceededError("Maximum number of tasks reached for this project.")
         if title is None or title.strip() == "":
             raise ValidationError("Task title cannot be empty.")
-        if len(title) > MAX_TASK_TITLE_WORDS:
-            raise ValidationError(f"Task title must be ≤ {MAX_TASK_TITLE_WORDS} characters.")
-        if description and len(description) > MAX_TASK_DESCRIPTION_WORDS:
-            raise ValidationError(f"Task description must be ≤ {MAX_TASK_DESCRIPTION_WORDS} characters.")
+        if len(title) > MAX_TASK_TITLE_CHARS:
+            raise ValidationError(f"Task title must be ≤ {MAX_TASK_TITLE_CHARS} characters.")
+        if description and len(description) > MAX_TASK_DESCRIPTION_CHARS:
+            raise ValidationError(f"Task description must be ≤ {MAX_TASK_DESCRIPTION_CHARS} characters.")
         if status not in VALID_STATUSES:
             raise ValidationError(f"Invalid status: {status}")
 
@@ -163,13 +163,13 @@ class InMemoryRepository:
             raise TaskNotFoundError(f"Task with ID {task_id} not found in project {project_id}.")
 
         if title is not None:
-            if not (1 <= len(title) <= MAX_TASK_TITLE_WORDS):
-                raise ValidationError(f"Title must be 1–{MAX_TASK_TITLE_WORDS} characters.")
+            if not (1 <= len(title) <= MAX_TASK_TITLE_CHARS):
+                raise ValidationError(f"Title must be 1–{MAX_TASK_TITLE_CHARS} characters.")
             task.title = title
 
         if description is not None:
-            if not (1 <= len(description) <= MAX_TASK_DESCRIPTION_WORDS):
-                raise ValidationError(f"Description must be 1–{MAX_TASK_DESCRIPTION_WORDS} characters.")
+            if not (1 <= len(description) <= MAX_TASK_DESCRIPTION_CHARS):
+                raise ValidationError(f"Description must be 1–{MAX_TASK_DESCRIPTION_CHARS} characters.")
             task.description = description
 
         if status is not None:
@@ -213,10 +213,10 @@ class InMemoryRepository:
         if not project:
             raise ProjectNotFoundError(f"Project with ID {project_id} not found.")
 
-        if not (1 <= len(new_name) <= MAX_PROJECT_NAME_WORDS):
-            raise ValidationError(f"Project name must be 1–{MAX_PROJECT_NAME_WORDS} characters.")
-        if not (1 <= len(new_description) <= MAX_PROJECT_DESCRIPTION_WORDS):
-            raise ValidationError(f"Project description must be 1–{MAX_PROJECT_DESCRIPTION_WORDS} characters.")
+        if not (1 <= len(new_name) <= MAX_PROJECT_NAME_CHARS):
+            raise ValidationError(f"Project name must be 1–{MAX_PROJECT_NAME_CHARS} characters.")
+        if not (1 <= len(new_description) <= MAX_PROJECT_DESCRIPTION_CHARS):
+            raise ValidationError(f"Project description must be 1–{MAX_PROJECT_DESCRIPTION_CHARS} characters.")
 
         # Ensure uniqueness of the new name
         if any(p.name == new_name and p.id != project_id for p in self.projects.values()):
