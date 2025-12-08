@@ -96,6 +96,10 @@ Run the scheduler daemon:
 poetry run todolist scheduler:run
 ```
 
+## Postman Collection
+
+Import `postman/TodoList_API.postman_collection.json` into Postman to test all API endpoints.
+
 ## Contributing
 
 Contributions are welcome! Please submit pull requests.
