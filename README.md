@@ -1,5 +1,7 @@
 # ToDo List API
 
+![CI](https://github.com/ykazemim/todo-list/actions/workflows/ci.yml/badge.svg)
+
 A RESTful API for managing projects and tasks, built with FastAPI.
 
 > ⚠️ **DEPRECATION NOTICE**: The CLI interface is deprecated and will be removed in a future version. Please use the Web API instead.
@@ -99,6 +101,18 @@ poetry run todolist scheduler:run
 ## Postman Collection
 
 Import `postman/TodoList_API.postman_collection.json` into Postman to test all API endpoints.
+
+## Testing
+
+Run tests:
+```bash
+poetry run pytest
+```
+
+With coverage:
+```bash
+poetry run pytest --cov=src
+```
 
 ## Contributing
 
